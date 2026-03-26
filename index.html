@@ -606,68 +606,75 @@ async function sendMessage() {
 async function handleImageAgent(text, msgId) {
   if (!FAL_KEY) {
     document.getElementById('thinking').remove();
-    histories.img.push({ type: 'agent', text: 'Please add your fal.ai API key above to generate images.', id: Date.now().toString() });
+    histories.img.push({ type: 'agent', text: 'Please add your fal.ai API key in the banner above to generate images.', id: Date.now().toString() });
+    document.getElementById('fal-banner').style.display = 'flex';
     renderMessages();
     document.getElementById('status-pill').textContent = 'ready';
     return;
   }
 
-  var systemPrompt = AGENTS.img.system;
+  // Step 1: Use Claude to craft a detailed image generation prompt
+  var systemPrompt = 'You are a game art director. Your ONLY job is to write a single optimized image generation prompt based on the user request and pipeline context. Output ONLY the prompt text itself  no explanation, no description, no headers, no extra text. Just the raw prompt string that will be sent directly to an image generator. Make it detailed, specific, and visually rich. Include art style, lighting, colors, composition, and mood. Max 200 words.';
   var ctx = buildContextString();
-  if (ctx) systemPrompt += '\n\nPIPELINE CONTEXT:\n' + ctx;
+  if (ctx) systemPrompt += ' PIPELINE CONTEXT: ' + ctx.substring(0, 800);
 
-  var apiMessages = histories.img
-    .filter(function(m) { return m.type === 'user' || m.type === 'agent'; })
-    .map(function(m) { return { role: m.type === 'user' ? 'user' : 'assistant', content: m.text }; });
+  document.getElementById('status-pill').textContent = 'crafting prompt...';
+
+  var imgPrompt = text + ', mobile game concept art, professional game art, high quality, digital art';
 
   try {
     var res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, system: systemPrompt, messages: apiMessages })
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: text }]
+      })
     });
     var data = await res.json();
-    var reply = (data.content || []).filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
-
-    var imgPromptMatch = reply.match(/IMAGE PROMPT:\s*([^\n]+)/i) || reply.match(/Prompt:\s*([^\n]+)/i);
-    var imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : text + ', mobile game art, digital art, professional game concept art';
-
-    var aId = Date.now().toString();
-    histories.img.push({ type: 'agent', text: reply, id: aId });
-
-    document.getElementById('thinking').remove();
-    renderMessages();
-    document.getElementById('status-pill').textContent = 'generating image...';
-
-    try {
-      var falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Key ' + FAL_KEY },
-        body: JSON.stringify({ prompt: imgPrompt, image_size: 'landscape_4_3', num_inference_steps: 4, num_images: 1 })
-      });
-      var falData = await falRes.json();
-      var imageUrl = falData.images && falData.images[0] && falData.images[0].url;
-      if (imageUrl) {
-        var lastMsg = histories.img[histories.img.length - 1];
-        lastMsg.imageUrl = imageUrl;
-        lastMsg.imagePrompt = imgPrompt;
-        pipelineCtx.img = 'Generated: ' + imgPrompt;
-        updateContextPanel();
-      }
-    } catch(falErr) {
-      console.error('FAL error:', falErr);
-    }
-
-    renderMessages();
-    document.getElementById('status-pill').textContent = 'ready';
-    document.getElementById('handoff-text').textContent = 'Send context to ' + AGENTS.img.nextName;
-    document.getElementById('handoff-bar').classList.add('visible');
+    var craftedPrompt = (data.content || []).filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('').trim();
+    if (craftedPrompt && craftedPrompt.length > 10) imgPrompt = craftedPrompt;
   } catch(e) {
-    document.getElementById('thinking') && document.getElementById('thinking').remove();
-    histories.img.push({ type: 'agent', text: 'Error: ' + e.message, id: Date.now().toString() });
-    renderMessages();
-    document.getElementById('status-pill').textContent = 'error';
+    console.log('Prompt crafting failed, using fallback:', e);
   }
+
+  // Step 2: Show status and call fal.ai directly
+  document.getElementById('thinking').remove();
+  document.getElementById('status-pill').textContent = 'generating image...';
+
+  var statusMsg = { type: 'agent', text: 'Generating image with prompt: ' + imgPrompt, id: Date.now().toString(), generating: true };
+  histories.img.push(statusMsg);
+  renderMessages();
+
+  try {
+    var falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Key ' + FAL_KEY },
+      body: JSON.stringify({ prompt: imgPrompt, image_size: 'landscape_4_3', num_inference_steps: 4, num_images: 1 })
+    });
+    var falData = await falRes.json();
+    var imageUrl = falData.images && falData.images[0] && falData.images[0].url;
+
+    if (imageUrl) {
+      statusMsg.imageUrl = imageUrl;
+      statusMsg.imagePrompt = imgPrompt;
+      statusMsg.text = 'Generated: ' + imgPrompt;
+      statusMsg.generating = false;
+      pipelineCtx.img = 'Image generated: ' + imgPrompt.substring(0, 150);
+      updateContextPanel();
+    } else {
+      statusMsg.text = 'Image generation failed. fal.ai response: ' + JSON.stringify(falData).substring(0, 200);
+    }
+  } catch(falErr) {
+    statusMsg.text = 'fal.ai error: ' + falErr.message + '. Check your API key is valid.';
+  }
+
+  renderMessages();
+  document.getElementById('status-pill').textContent = 'ready';
+  document.getElementById('handoff-text').textContent = 'Send context to ' + AGENTS.img.nextName;
+  document.getElementById('handoff-bar').classList.add('visible');
 }
 
 function saveFalKey() {
