@@ -665,18 +665,22 @@ const AGENTS = {
     color: 'var(--market)',
     welcome: 'Start by analyzing the market. Your findings will flow downstream to the GDD agent automatically.',
     placeholder: 'e.g. Analyze the top hyper-casual games this quarter...',
-    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. You analyze app store data, genre trends, competitor performance, and market opportunities.
+    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. Your job is to analyze mobile game market data and extract sharp, actionable insights.
 
-Your expertise: App Magic data interpretation, genre performance metrics, competitor analysis, monetization benchmarks, audience demographics, market gap identification, trend forecasting.
+IMPORTANT: You work in two modes:
+1. LIVE DATA MODE: Hatem pastes raw data from App Magic, Sensor Tower, or other tools directly into the chat. You extract every insight — downloads, revenue, rankings, DAU, retention, ARPU, eCPM, CPI, genre trends.
+2. KNOWLEDGE MODE: When no data is pasted, you provide expert analysis based on your deep knowledge of mobile gaming. Always be specific — give real publisher names, real game titles, real benchmarks. Never refuse to analyze or say you lack data.
 
-Always provide: specific data points, genre recommendations ranked by opportunity, competitor names and their weaknesses, monetization insights, and a clear recommendation for the most promising game concept to pursue.
+Always structure output: Market Overview → Genre Rankings (ranked by opportunity) → Competitor Weaknesses → Market Gaps → Clear Recommendation.
 
-End every substantial analysis with a brief "→ GDD HANDOFF SUMMARY:" section with 3-5 bullet points that the GDD agent can use as input.`,
+End every analysis with a brief: → GDD HANDOFF SUMMARY: with 3-5 bullet points the GDD agent can use directly.`,
     actions: [
-      { label: 'Analyze hyper-casual market', sub: 'Top genres, gaps, opportunities', prompt: 'Analyze the current hyper-casual mobile game market. What genres are performing best, what gaps exist, and what type of game should we build?' },
-      { label: 'Competitor deep-dive', sub: 'Top 5 competitors in a genre', prompt: 'Do a competitor analysis for the top 5 games in the puzzle genre right now. What are their weaknesses and how can we differentiate?' },
-      { label: 'Monetization trends', sub: 'IAP vs ads vs hybrid', prompt: 'What are the current best-performing monetization models for mobile games in 2025? Compare IAP, ad-based, and hybrid approaches with data.' },
-      { label: 'Genre opportunity scan', sub: 'Where is the whitespace?', prompt: 'Scan the current mobile game market for underserved genres or mechanics. Where is the biggest whitespace opportunity right now?' }
+      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it for genre opportunities, competitor gaps, and what game to build next:
+
+[PASTE YOUR APP MAGIC DATA HERE]' },
+      { label: 'Hyper-casual opportunity scan', sub: 'Best genres to build now', prompt: 'Analyze the hyper-casual mobile game market. Which sub-genres have the best opportunity score (low competition + high downloads + strong monetization)? Give me specific publisher weaknesses and a clear recommendation for what game we should build.' },
+      { label: 'Competitor deep-dive', sub: 'Top publishers weaknesses', prompt: 'Analyze the top hyper-casual publishers: Voodoo, Rollic, Supersonic Studios, CrazyLabs, and Homa Games. For each: market share, strongest titles, biggest weaknesses, and where a smaller studio can outcompete them.' },
+      { label: 'Monetization benchmarks', sub: 'eCPM, CPI, ARPU targets', prompt: 'Give me current monetization benchmarks for hyper-casual games: eCPM by ad format and region, target CPI by genre, ARPU, D1/D7/D30 retention benchmarks, and the optimal monetization model for a new studio launching in 2025.' }
     ],
     nextAgent: 'gdd',
     nextName: 'GDD Agent',
