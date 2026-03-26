@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hatem's Game Studio Pipeline</title>
-<link href="https://fonts.googleapis.com/css2family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0a0a0f;
@@ -598,7 +598,7 @@ body::before {
         <!-- Messages -->
         <div class="messages" id="messages">
           <div class="welcome" id="welcome-screen">
-            <span class="welcome-icon" id="welcome-icon">[chart]</span>
+            <span class="welcome-icon" id="welcome-icon"></span>
             <div class="welcome-title" id="welcome-title">Market Analysis Agent</div>
             <div class="welcome-sub" id="welcome-sub">Start by analyzing the market. Your findings will flow downstream to the GDD agent automatically.</div>
           </div>
@@ -661,14 +661,14 @@ const AGENTS = {
     name: 'Market Analysis',
     title: 'Market Analysis Agent',
     desc: 'App Magic - Genre trends - Competitor analysis',
-    icon: '[chart]',
+    icon: '',
     color: 'var(--market)',
     welcome: 'Start by analyzing the market. Your findings will flow downstream to the GDD agent automatically.',
     placeholder: 'e.g. Analyze the top hyper-casual games this quarter...',
-    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. You analyze mobile game market data and extract sharp, actionable insights. You work in two modes: (1) LIVE DATA MODE when Hatem pastes App Magic or Sensor Tower data directly - extract every insight including downloads, revenue, rankings, retention, ARPU, eCPM, CPI. (2) KNOWLEDGE MODE when no data is pasted - provide expert analysis with real publisher names, real game titles, real benchmarks. Never refuse to analyze. Always structure output as: Market Overview, Genre Rankings by opportunity, Competitor Weaknesses, Market Gaps, Clear Recommendation. End every analysis with: GDD HANDOFF SUMMARY with 3-5 bullet points.`,
+    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. Analyze mobile game market data and extract sharp actionable insights. You work in two modes: (1) LIVE DATA MODE - when Hatem pastes App Magic or Sensor Tower data, extract every metric including downloads, revenue, rankings, retention, ARPU, eCPM, CPI. (2) KNOWLEDGE MODE - provide expert analysis with real publisher names, real game titles, real benchmarks. Never refuse to analyze. Structure output as: Market Overview, Genre Rankings by opportunity, Competitor Weaknesses, Market Gaps, Clear Recommendation. End every analysis with GDD HANDOFF SUMMARY with 3-5 bullet points.`,
     actions: [
-      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it. Just copy and paste your App Magic export directly into this chat.' },
-      { label: 'Hyper-casual opportunity scan', sub: 'Best genres to build now', prompt: 'Analyze the hyper-casual mobile game market. Which sub-genres have the best opportunity score (low competition + high downloads + strong monetization) Give me specific publisher weaknesses and a clear recommendation for what game we should build.' },
+      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it. Copy and paste your App Magic export directly into this chat.' },
+      { label: 'Hyper-casual opportunity scan', sub: 'Best genres to build now', prompt: 'Analyze the hyper-casual mobile game market. Which sub-genres have the best opportunity score (low competition + high downloads + strong monetization)? Give me specific publisher weaknesses and a clear recommendation for what game we should build.' },
       { label: 'Competitor deep-dive', sub: 'Top publishers weaknesses', prompt: 'Analyze the top hyper-casual publishers: Voodoo, Rollic, Supersonic Studios, CrazyLabs, and Homa Games. For each: market share, strongest titles, biggest weaknesses, and where a smaller studio can outcompete them.' },
       { label: 'Monetization benchmarks', sub: 'eCPM, CPI, ARPU targets', prompt: 'Give me current monetization benchmarks for hyper-casual games: eCPM by ad format and region, target CPI by genre, ARPU, D1/D7/D30 retention benchmarks, and the optimal monetization model for a new studio launching in 2025.' }
     ],
@@ -680,7 +680,7 @@ const AGENTS = {
     name: 'GDD',
     title: 'GDD Agent',
     desc: 'Core loop - Mechanics - Economy - UX flow',
-    icon: '[doc]',
+    icon: '',
     color: 'var(--gdd)',
     welcome: 'Using market insights, I\'ll draft a full Game Design Document. The management agent will use this to build your Jira backlog.',
     placeholder: 'e.g. Write a GDD for a merge puzzle game targeting casual players...',
@@ -713,7 +713,7 @@ End every GDD with a "-> MANAGEMENT HANDOFF:" section listing the main epics (5-
     name: 'Management',
     title: 'Management Agent',
     desc: 'Jira - Scrum - Sprint planning - Backlog',
-    icon: '[folder]',
+    icon: '',
     color: 'var(--mgmt)',
     welcome: 'I\'ll turn your GDD into a structured Jira backlog with epics, user stories, and sprint plans.',
     placeholder: 'e.g. Create user stories for the core gameplay loop...',
@@ -738,7 +738,7 @@ End every management output with a "-> UI/UX HANDOFF:" section listing all scree
     name: 'UI/UX',
     title: 'UI/UX Agent',
     desc: 'Wireframes - Mockups - Screen specs - Approval',
-    icon: '[art]',
+    icon: '',
     color: 'var(--uiux)',
     welcome: 'I\'ll design wireframes and written specs for every screen. After your approval, the GDD updates automatically and programming begins.',
     placeholder: 'e.g. Design the main menu and HUD wireframe...',
@@ -769,7 +769,7 @@ When approved, output a "-> PROGRAMMING HANDOFF:" with technical implementation 
     name: 'Programming',
     title: 'Programming Agent',
     desc: 'Unity - C# - Architecture - Level design',
-    icon: '[keyboard]',
+    icon: '',
     color: 'var(--prog)',
     welcome: 'With approved wireframes and full context, I\'ll write Unity C# code, architect your systems, and design your levels.',
     placeholder: 'e.g. Write a state machine for the player controller...',
@@ -875,8 +875,8 @@ function renderQuickActions() {
   const grid = document.getElementById('quick-grid');
   const actions = AGENTS[current].actions;
   if (histories[current].length > 0) { grid.innerHTML = ''; return; }
-  grid.innerHTML = actions.map(a =>
-    `<button class="qbtn" onclick="quickFire(${JSON.stringify(a.prompt)})">
+  grid.innerHTML = actions.map((a, i) =>
+    `<button class="qbtn" data-idx="${i}" onclick="quickFireIdx(this)">
       <div class="qbtn-label">${a.label}</div>
       <div class="qbtn-sub">${a.sub}</div>
     </button>`
@@ -886,6 +886,13 @@ function renderQuickActions() {
 function quickFire(prompt) {
   document.getElementById('msg-input').value = prompt;
   sendMessage();
+}
+
+function quickFireIdx(btn) {
+  const idx = parseInt(btn.getAttribute('data-idx'));
+  const agent = AGENTS[current];
+  const prompt = agent.actions[idx].prompt;
+  quickFire(prompt);
 }
 
 async function sendMessage() {
@@ -923,7 +930,7 @@ async function sendMessage() {
   // Build messages
   const apiMessages = histories[current]
     .filter(m => m.type === 'user' || m.type === 'agent')
-    .map(m => ({ role: m.type === 'user'  'user' : 'assistant', content: m.text }));
+    .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }));
 
   try {
     const res = await fetch('https://studio-os-proxy.hatem-asery.workers.dev/', {
@@ -934,19 +941,19 @@ async function sendMessage() {
         max_tokens: 1000,
         system: systemWithContext,
         messages: apiMessages,
-        ...(current === 'market'  { tools: [{ type: 'web_search_20250305', name: 'web_search' }] } : {})
+        ...(current === 'market' ? { tools: [{ type: 'web_search_20250305', name: 'web_search' }] } : {})
       })
     });
     const data = await res.json();
-    const reply = data.content.filter(b => b.type === 'text').map(b => b.text || '').join('') || data.error.message || ('API Error: ' + JSON.stringify(data));
+    const reply = data.content?.filter(b => b.type === 'text').map(b => b.text || '').join('') || data.error?.message || ('API Error: ' + JSON.stringify(data));
 
-    document.getElementById('thinking').remove();
+    document.getElementById('thinking')?.remove();
     const aId = Date.now().toString();
     histories[current].push({ type: 'agent', text: reply, id: aId });
 
     // Auto-save to pipeline context
     if (reply.length > 100) {
-      const summary = reply.substring(0, 300) + (reply.length > 300  '...' : '');
+      const summary = reply.substring(0, 300) + (reply.length > 300 ? '...' : '');
       pipelineContext[current] = summary;
       updateContextPanel();
     }
@@ -962,7 +969,7 @@ async function sendMessage() {
     }
 
   } catch(e) {
-    document.getElementById('thinking').remove();
+    document.getElementById('thinking')?.remove();
     histories[current].push({ type: 'agent', text: 'Error reaching agent. Please try again.', id: Date.now().toString() });
     renderMessages();
     document.getElementById('status-pill').textContent = 'error';
@@ -1002,12 +1009,12 @@ function handoffToNext() {
 function approveWireframe(id) {
   const panel = document.getElementById('approval-' + id);
   if (panel) {
-    panel.innerHTML = `<div style="font-size:12px;color:var(--market);font-family:'DM Mono',monospace;"> wireframe approved -- generating GDD update & programming brief...</div>`;
+    panel.innerHTML = `<div style="font-size:12px;color:var(--market);font-family:'DM Mono',monospace;">OK wireframe approved -- generating GDD update & programming brief...</div>`;
   }
   const msg = histories[current].find(m => m.id === id);
   if (msg) msg.approved = true;
 
-  pipelineContext.uiux = 'WIREFRAMES APPROVED. ' + (histories.uiux.filter(m=>m.type==='agent').slice(-1)[0].text.substring(0,400) || '');
+  pipelineContext.uiux = 'WIREFRAMES APPROVED. ' + (histories.uiux.filter(m=>m.type==='agent').slice(-1)[0]?.text?.substring(0,400) || '');
   updateContextPanel();
 
   setTimeout(() => {
