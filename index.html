@@ -737,7 +737,20 @@ function toggleContext() {
 }
 
 function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  var s = String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+  // Render markdown images as actual img tags
+  s = s.replace(/!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, function(match, alt, url) {
+    return '</div><div class="img-result"><img src="' + url + '" alt="' + alt + '" style="width:100%;display:block;border-radius:8px;"/><div class="img-caption">' + alt + '</div></div><div class="msg-bubble" style="display:none">';
+  });
+  // Render markdown bold
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Render markdown headers
+  s = s.replace(/^## ([^\n]+)/gm, '<div style="font-weight:600;font-size:13px;margin:8px 0 4px;color:var(--text)">$1</div>');
+  s = s.replace(/\n/g,'<br>');
+  return s;
 }
 
 switchAgent('market');
