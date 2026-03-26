@@ -932,7 +932,7 @@ async function sendMessage() {
     .map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text }));
 
   try {
-    const res = await fetch('https://studio-os-proxy.hatem-asery.workers.dev', {
+    const res = await fetch('https://studio-os-proxy.hatem-asery.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -943,7 +943,7 @@ async function sendMessage() {
       })
     });
     const data = await res.json();
-    const reply = data.content?.map(b => b.text || '').join('') || 'No response received.';
+    const reply = data.content?.map(b => b.text || '').join('') || data.error?.message || ('API Error: ' + JSON.stringify(data));
 
     document.getElementById('thinking')?.remove();
     const aId = Date.now().toString();
