@@ -665,19 +665,9 @@ const AGENTS = {
     color: 'var(--market)',
     welcome: 'Start by analyzing the market. Your findings will flow downstream to the GDD agent automatically.',
     placeholder: 'e.g. Analyze the top hyper-casual games this quarter...',
-    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. Your job is to analyze mobile game market data and extract sharp, actionable insights.
-
-IMPORTANT: You work in two modes:
-1. LIVE DATA MODE: Hatem pastes raw data from App Magic, Sensor Tower, or other tools directly into the chat. You extract every insight -- downloads, revenue, rankings, DAU, retention, ARPU, eCPM, CPI, genre trends.
-2. KNOWLEDGE MODE: When no data is pasted, you provide expert analysis based on your deep knowledge of mobile gaming. Always be specific -- give real publisher names, real game titles, real benchmarks. Never refuse to analyze or say you lack data.
-
-Always structure output: Market Overview -> Genre Rankings (ranked by opportunity) -> Competitor Weaknesses -> Market Gaps -> Clear Recommendation.
-
-End every analysis with a brief: -> GDD HANDOFF SUMMARY: with 3-5 bullet points the GDD agent can use directly.`,
+    system: `You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. You analyze mobile game market data and extract sharp, actionable insights. You work in two modes: (1) LIVE DATA MODE when Hatem pastes App Magic or Sensor Tower data directly - extract every insight including downloads, revenue, rankings, retention, ARPU, eCPM, CPI. (2) KNOWLEDGE MODE when no data is pasted - provide expert analysis with real publisher names, real game titles, real benchmarks. Never refuse to analyze. Always structure output as: Market Overview, Genre Rankings by opportunity, Competitor Weaknesses, Market Gaps, Clear Recommendation. End every analysis with: GDD HANDOFF SUMMARY with 3-5 bullet points.`,
     actions: [
-      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it for genre opportunities, competitor gaps, and what game to build next:
-
-[PASTE YOUR APP MAGIC DATA HERE]' },
+      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it. Just copy and paste your App Magic export directly into this chat.' },
       { label: 'Hyper-casual opportunity scan', sub: 'Best genres to build now', prompt: 'Analyze the hyper-casual mobile game market. Which sub-genres have the best opportunity score (low competition + high downloads + strong monetization) Give me specific publisher weaknesses and a clear recommendation for what game we should build.' },
       { label: 'Competitor deep-dive', sub: 'Top publishers weaknesses', prompt: 'Analyze the top hyper-casual publishers: Voodoo, Rollic, Supersonic Studios, CrazyLabs, and Homa Games. For each: market share, strongest titles, biggest weaknesses, and where a smaller studio can outcompete them.' },
       { label: 'Monetization benchmarks', sub: 'eCPM, CPI, ARPU targets', prompt: 'Give me current monetization benchmarks for hyper-casual games: eCPM by ad format and region, target CPI by genre, ARPU, D1/D7/D30 retention benchmarks, and the optimal monetization model for a new studio launching in 2025.' }
