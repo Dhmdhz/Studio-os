@@ -479,7 +479,7 @@ function switchAgent(id) {
   document.getElementById('msg-input').placeholder = a.placeholder;
   document.getElementById('ctx-toggle').classList.toggle('has-ctx', !!pipelineCtx[id]);
   document.getElementById('handoff-bar').classList.remove('visible');
-  document.getElementById('fal-banner').style.display = (id === 'img' && !FAL_KEY) ? 'flex' : 'none';
+  document.getElementById('fal-banner').style.display = 'none';
   renderMessages();
   renderQuickActions();
 }
@@ -604,14 +604,7 @@ async function sendMessage() {
 }
 
 async function handleImageAgent(text, msgId) {
-  if (!FAL_KEY) {
-    document.getElementById('thinking').remove();
-    histories.img.push({ type: 'agent', text: 'Please add your fal.ai API key in the banner above to generate images.', id: Date.now().toString() });
-    document.getElementById('fal-banner').style.display = 'flex';
-    renderMessages();
-    document.getElementById('status-pill').textContent = 'ready';
-    return;
-  }
+  // FAL key is stored securely in Cloudflare Worker
 
   // Step 1: Use Claude to craft a detailed image generation prompt
   var systemPrompt = 'You are a game art director. Your ONLY job is to write a single optimized image generation prompt based on the user request and pipeline context. Output ONLY the prompt text itself  no explanation, no description, no headers, no extra text. Just the raw prompt string that will be sent directly to an image generator. Make it detailed, specific, and visually rich. Include art style, lighting, colors, composition, and mood. Max 200 words.';
@@ -649,9 +642,9 @@ async function handleImageAgent(text, msgId) {
   renderMessages();
 
   try {
-    var falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+    var falRes = await fetch(WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Key ' + FAL_KEY },
+      headers: { 'Content-Type': 'application/json', 'X-Target': 'fal' },
       body: JSON.stringify({ prompt: imgPrompt, image_size: 'landscape_4_3', num_inference_steps: 4, num_images: 1 })
     });
     var falData = await falRes.json();
