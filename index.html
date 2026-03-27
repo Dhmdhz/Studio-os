@@ -574,18 +574,19 @@ async function sendMessage() {
 
   var apiMessages = histories[current]
     .filter(function(m) { return m.type === 'user' || m.type === 'agent'; })
+    .slice(-6)
     .map(function(m) { return { role: m.type === 'user' ? 'user' : 'assistant', content: m.text }; });
 
   try {
     var data = await fetchWithRetry(WORKER_URL, {
-      model: 'claude-sonnet-4-20250514', max_tokens: 4096, system: systemPrompt, messages: apiMessages
+      model: 'claude-sonnet-4-20250514', max_tokens: 2048, system: systemPrompt, messages: apiMessages
     });
     var reply = (data.content || []).filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('') || (data.error && data.error.message) || JSON.stringify(data);
 
     document.getElementById('thinking').remove();
     var aId = Date.now().toString();
     histories[current].push({ type: 'agent', text: reply, id: aId });
-    if (reply.length > 80) { pipelineCtx[current] = reply.substring(0, 500); updateContextPanel(); }
+    if (reply.length > 80) { pipelineCtx[current] = reply.substring(0, 200); updateContextPanel(); }
     renderMessages();
     document.getElementById('status-pill').textContent = 'ready';
     if (a.nextAgent) {
@@ -678,7 +679,7 @@ function buildContextString() {
   var currentIdx = ['market','gdd','mgmt','uiux','img','assets','prog'].indexOf(current);
   var str = '';
   order.slice(0, currentIdx).forEach(function(k) {
-    if (pipelineCtx[k]) str += '[' + k.toUpperCase() + ' AGENT]:\n' + pipelineCtx[k] + '\n\n';
+    if (pipelineCtx[k]) str += '[' + k.toUpperCase() + ']: ' + pipelineCtx[k].substring(0, 200) + ' ';
   });
   return str.trim();
 }
@@ -687,7 +688,7 @@ function handoffToNext() {
   var a = AGENTS[current];
   if (!a.nextAgent) return;
   var lastMsg = histories[current].filter(function(m) { return m.type === 'agent'; }).slice(-1)[0];
-  if (lastMsg) { pipelineCtx[current] = lastMsg.text.substring(0, 600); updateContextPanel(); }
+  if (lastMsg) { pipelineCtx[current] = lastMsg.text.substring(0, 200); updateContextPanel(); }
   document.getElementById('handoff-bar').classList.remove('visible');
   switchAgent(a.nextAgent);
   setTimeout(function() {
