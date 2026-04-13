@@ -511,10 +511,10 @@ function renderMessages() {
         ap.innerHTML = '<div class="approval-title">|| wireframe awaiting approval</div><div style="font-size:11px;color:var(--muted);line-height:1.5;">Review the wireframes above then approve to pass to Image Generation.</div><div class="approval-btns"><button class="approve-btn" data-id="' + m.id + '" onclick="approveWireframe(this)">Approve & continue -></button><button class="reject-btn" onclick="requestChanges()">Request changes</button></div>';
         container.appendChild(ap);
       }
-      if (current === 'img' && m.imageUrl) {
+      if (m.imageUrl) {
         var imgDiv = document.createElement('div');
         imgDiv.className = 'img-result';
-        imgDiv.innerHTML = '<img src="' + m.imageUrl + '" alt="Generated"/><div class="img-caption">' + escHtml(m.imagePrompt || 'Generated image') + '</div>';
+        imgDiv.innerHTML = '<img src="' + m.imageUrl + '" alt="Generated" style="width:100%;display:block;border-radius:8px;" onerror="this.parentElement.innerHTML=\'<div style=\"padding:10px;color:var(--muted);font-size:11px\">Image failed to load: ' + m.imageUrl.substring(0,50) + '...</div>\'"/><div class="img-caption">' + escHtml((m.imagePrompt || '').substring(0, 120)) + '</div>';
         container.appendChild(imgDiv);
       }
     }
@@ -641,7 +641,10 @@ async function handleImageAgent(text, msgId) {
       body: JSON.stringify({ prompt: imgPrompt, image_size: 'landscape_4_3', num_inference_steps: 4, num_images: 1 })
     });
     var falData = await falRes.json();
+    console.log('fal.ai response:', JSON.stringify(falData).substring(0, 300));
     var imageUrl = falData.images && falData.images[0] && falData.images[0].url;
+    if (!imageUrl && falData.image && falData.image.url) imageUrl = falData.image.url;
+    if (!imageUrl && falData.url) imageUrl = falData.url;
 
     if (imageUrl) {
       statusMsg.imageUrl = imageUrl;
@@ -658,6 +661,8 @@ async function handleImageAgent(text, msgId) {
   }
 
   renderMessages();
+  var container2 = document.getElementById('messages');
+  container2.scrollTop = container2.scrollHeight;
   document.getElementById('status-pill').textContent = 'ready';
   document.getElementById('handoff-text').textContent = 'Send context to ' + AGENTS.img.nextName;
   document.getElementById('handoff-bar').classList.add('visible');
