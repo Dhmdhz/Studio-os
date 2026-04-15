@@ -316,6 +316,15 @@ body::before {
           <button class="handoff-btn" onclick="handoffToNext()">Send to next agent -></button>
         </div>
         <div class="input-area">
+          <div class="upload-bar" id="upload-bar" style="display:none;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;">
+            <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">Upload GDD:</span>
+            <label style="cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;padding:4px 12px;border:1px solid var(--border2);border-radius:6px;color:var(--text);background:var(--surface)">
+              PDF or Word
+              <input type="file" id="gdd-file" accept=".pdf,.doc,.docx" style="display:none" onchange="handleFileUpload(this)">
+            </label>
+            <span id="file-name" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">no file selected</span>
+            <button onclick="clearFile()" style="margin-left:auto;font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;border:1px solid var(--border2);border-radius:5px;background:none;color:var(--muted);cursor:pointer">clear</button>
+          </div>
           <div class="input-wrap">
             <textarea class="msg-input" id="msg-input" placeholder="Ask your agent..." rows="1"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
@@ -352,12 +361,12 @@ var AGENTS = {
     icon: '[chart]', color: 'var(--market)',
     welcome: 'Start by analyzing the market. Your findings flow downstream to all agents automatically.',
     placeholder: 'e.g. Analyze the hyper-casual market right now...',
-    system: 'You are a specialized Mobile Game Market Analysis Agent for Hatem, a professional game designer. Analyze mobile game market data and give sharp, exhaustive, actionable insights with no limits on length. You work in two modes: (1) LIVE DATA MODE - when Hatem pastes App Magic or Sensor Tower data, extract every metric. (2) KNOWLEDGE MODE - provide deep expert analysis with real publisher names, real game titles, real benchmarks. Never refuse. Never truncate. Give everything you have. Structure: Market Overview, Genre Rankings by opportunity score, Top Competitor Weaknesses (name each one), Market Gaps, Clear Recommendation with reasoning. End with GDD HANDOFF SUMMARY: 5-8 bullet points.',
+ system: 'You are a specialized Mobile Game Market Analysis Agent for Hatem. You operate in three modes: (1) GDD ANALYSIS MODE - when a GDD is provided, identify the genre, core mechanics, target audience, and monetization model, then assess: Market Opportunity Score 1-10, Genre Saturation Level, Key Competitors in that genre, CPI and ARPU benchmarks, whether genre is trending up or down, and a clear Market Verdict with reasoning. Structure as: Genre Identified, Opportunity Score, Saturation, Competitors, Monetization Viability, Verdict. (2) LIVE DATA MODE - when App Magic or analytics data is pasted extract every metric. (3) KNOWLEDGE MODE - expert analysis with real publishers, titles, benchmarks. End every analysis with GDD HANDOFF SUMMARY.',
     actions: [
-      { label: 'Hyper-casual scan', sub: 'Full market opportunity report', prompt: 'Give me a full exhaustive analysis of the hyper-casual mobile game market right now. Which genres have the best opportunity, who are the weak competitors, and what specific game should we build? Go deep.' },
-      { label: 'Paste App Magic data', sub: 'Analyze your live export', prompt: 'Paste your App Magic data below and I will extract every insight from it. Copy and paste your App Magic export directly into this chat.' },
-      { label: 'Competitor deep-dive', sub: 'Top publishers weaknesses', prompt: 'Deep dive on the top hyper-casual publishers: Voodoo, Rollic, Supersonic Studios, CrazyLabs, Homa Games, Lion Studios. For each give market share, top titles, core weaknesses, and how we can outcompete them.' },
-      { label: 'Monetization benchmarks', sub: 'eCPM, CPI, ARPU targets', prompt: 'Give me exhaustive monetization benchmarks for mobile games: eCPM by ad format and region, CPI by genre, ARPU, LTV, D1/D7/D30 retention benchmarks, and the optimal monetization stack for a new studio in 2025.' }
+      { label: 'Analyze my GDD', sub: 'Upload file or paste below', prompt: 'Analyze the GDD I have provided. Give me the genre identification, market opportunity score, genre saturation, key competitors, monetization viability, and your market verdict.' },
+      { label: 'Hyper-casual scan', sub: 'Full market opportunity report', prompt: 'Give me a full analysis of the hyper-casual mobile game market right now. Which genres have the best opportunity, who are the weak competitors, and what specific game should we build?' },
+      { label: 'Competitor deep-dive', sub: 'Top publishers weaknesses', prompt: 'Deep dive on the top hyper-casual publishers: Voodoo, Rollic, Supersonic, CrazyLabs, Homa. For each give market share, top titles, core weaknesses, and how we can outcompete them.' },
+      { label: 'Monetization benchmarks', sub: 'eCPM, CPI, ARPU targets', prompt: 'Give me monetization benchmarks for mobile games: eCPM by ad format and region, CPI by genre, ARPU, LTV, D1/D7/D30 retention benchmarks, and the optimal monetization stack.' }
     ],
     nextAgent: 'gdd', nextName: 'GDD Agent', contextKey: 'ctx-market'
   },
@@ -367,12 +376,12 @@ var AGENTS = {
     icon: '[doc]', color: 'var(--gdd)',
     welcome: 'Using market insights I will draft a complete Game Design Document. Nothing is left out.',
     placeholder: 'e.g. Write a full GDD for a physics destruction game...',
-    system: 'You are a specialized Game Design Document Agent for Hatem, a professional game designer. Write complete, exhaustive GDDs with no length limits. Use all pipeline context provided. Cover every section in full detail: 1) Game Overview 2) Core Loop with every sub-loop 3) All Mechanics with rules and edge cases 4) Complete Progression System 5) Economy Design 6) Monetization with exact price points 7) Art Direction with references 8) Audio Direction 9) Technical Requirements 10) KPI Targets. Be specific, be thorough, leave nothing out. End with MANAGEMENT HANDOFF: list every epic needed in Jira.',
+    system: 'You are a specialized Game Design Document Agent for Hatem, a professional game designer. You operate in two modes: (1) GDD REVIEW MODE - when an existing GDD is provided, give exhaustive structured feedback covering: Overall Assessment, Core Loop Analysis (strengths and weaknesses), Missing Sections (what is absent that a professional GDD must have), Mechanics Evaluation (are they fun, balanced, original), Monetization Review (is the model appropriate for the genre), Retention Mechanics (daily loops, progression hooks), Technical Feasibility, Player Experience gaps, and a prioritized list of specific improvements with reasoning. Score each section 1-10. Be brutally honest and specific. (2) GDD CREATION MODE - write complete new GDDs covering all sections in full detail. End with MANAGEMENT HANDOFF listing every epic.',
     actions: [
-      { label: 'Full GDD from market data', sub: 'Use all pipeline context', prompt: 'Write a complete exhaustive GDD using all market context available. Cover every section in full detail. Do not summarize or shorten anything.' },
-      { label: 'Core loop deep dive', sub: 'Every mechanic in detail', prompt: 'Design the complete core gameplay loop in exhaustive detail. Include the primary loop, secondary loops, session structure, retention hooks, and every player action with its feedback and reward.' },
-      { label: 'Full progression system', sub: 'Levels, economy, unlocks', prompt: 'Design the complete progression system: level structure, difficulty curve, unlock gates, currency economy, daily/weekly systems, and long-term retention mechanics. Be exhaustive.' },
-      { label: 'Monetization architecture', sub: 'Full IAP + ads system', prompt: 'Design the complete monetization system: every IAP item with price points, ad placement strategy with timing, soft and hard currency economy, battle pass design if applicable, and revenue projections.' }
+      { label: 'Review my GDD', sub: 'Upload file or paste below', prompt: 'Review the GDD I have provided. Give me a full structured critique: overall assessment, core loop analysis, missing sections, mechanics evaluation, monetization review, retention hooks, technical feasibility, and a prioritized list of specific improvements. Score each section 1-10.' },
+      { label: 'What is missing?', sub: 'Gap analysis on my GDD', prompt: 'Based on the GDD provided, identify everything that is missing or underdeveloped. What sections are absent? What mechanics need more detail? What systems are not accounted for?' },
+      { label: 'Write full GDD from market', sub: 'Use all pipeline context', prompt: 'Write a complete GDD using all market context available. Cover every section in full detail.' },
+      { label: 'Improve my GDD', sub: 'Rewrite weak sections', prompt: 'Based on the GDD provided, rewrite and improve the weakest sections. Make the core loop tighter, the progression more engaging, and the monetization more appropriate for the genre.' }
     ],
     nextAgent: 'mgmt', nextName: 'Management Agent', contextKey: 'ctx-gdd'
   },
@@ -480,6 +489,7 @@ function switchAgent(id) {
   document.getElementById('ctx-toggle').classList.toggle('has-ctx', !!pipelineCtx[id]);
   document.getElementById('handoff-bar').classList.remove('visible');
   document.getElementById('fal-banner').style.display = 'none';
+  document.getElementById('upload-bar').style.display = (id === 'market' || id === 'gdd') ? 'flex' : 'none';
   renderMessages();
   renderQuickActions();
 }
@@ -572,10 +582,12 @@ async function sendMessage() {
   var ctx = buildContextString();
   if (ctx) systemPrompt += '\n\nPIPELINE CONTEXT:\n' + ctx;
 
-  var apiMessages = histories[current]
-    .filter(function(m) { return m.type === 'user' || m.type === 'agent'; })
-    .slice(-6)
-    .map(function(m) { return { role: m.type === 'user' ? 'user' : 'assistant', content: m.text }; });
+  var apiMessages = (current === 'market' || current === 'gdd') && uploadedFileData
+    ? buildMessagesWithFile(text)
+    : histories[current]
+        .filter(function(m) { return m.type === 'user' || m.type === 'agent'; })
+        .slice(-6)
+        .map(function(m) { return { role: m.type === 'user' ? 'user' : 'assistant', content: m.text }; });
 
   try {
     var data = await fetchWithRetry(WORKER_URL, {
@@ -780,6 +792,63 @@ async function fetchWithRetry(url, body, maxRetries) {
       throw e;
     }
   }
+}
+
+var uploadedFileData = null;
+var uploadedFileName = '';
+
+function handleFileUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  uploadedFileName = file.name;
+  document.getElementById('file-name').textContent = file.name;
+  var reader = new FileReader();
+
+  if (file.type === 'application/pdf') {
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(',')[1];
+      uploadedFileData = { type: 'pdf', base64: base64, name: file.name };
+      document.getElementById('file-name').textContent = file.name + ' (ready)';
+      document.getElementById('file-name').style.color = 'var(--market)';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    reader.onload = function(e) {
+      uploadedFileData = { type: 'text', content: e.target.result, name: file.name };
+      document.getElementById('file-name').textContent = file.name + ' (ready)';
+      document.getElementById('file-name').style.color = 'var(--market)';
+    };
+    reader.readAsText(file);
+  }
+}
+
+function clearFile() {
+  uploadedFileData = null;
+  uploadedFileName = '';
+  document.getElementById('gdd-file').value = '';
+  document.getElementById('file-name').textContent = 'no file selected';
+  document.getElementById('file-name').style.color = 'var(--muted)';
+}
+
+function buildMessagesWithFile(userText) {
+  var msgs = histories[current]
+    .filter(function(m) { return m.type === 'user' || m.type === 'agent'; })
+    .slice(-6)
+    .map(function(m) { return { role: m.type === 'user' ? 'user' : 'assistant', content: m.text }; });
+
+  var lastUserMsg = msgs[msgs.length - 1];
+
+  if (uploadedFileData && lastUserMsg && lastUserMsg.role === 'user') {
+    if (uploadedFileData.type === 'pdf') {
+      lastUserMsg.content = [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: uploadedFileData.base64 } },
+        { type: 'text', text: userText || 'Analyze this GDD document.' }
+      ];
+    } else {
+      lastUserMsg.content = 'GDD DOCUMENT CONTENT:\n\n' + uploadedFileData.content.substring(0, 8000) + '\n\nUSER REQUEST: ' + (userText || 'Analyze this GDD.');
+    }
+  }
+  return msgs;
 }
 
 switchAgent('market');
